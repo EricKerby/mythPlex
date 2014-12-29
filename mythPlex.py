@@ -147,6 +147,10 @@ def main():
         else:
             logger.info("Linking %s to %s", source_path, link_path)
             os.symlink(source_path, link_path)
+
+            if config.subtitles_enabled:
+                extract_subtitles(source_path, link_path)
+
         logger.info("Episode processing took %s",
                     format(time.time() - start_episode_time, '.5f'))
 
@@ -285,6 +289,14 @@ def run_avconv_remux(source_path, output_path):
     if (config.mcf_enabled is True):
         mythcommflag_cleanup()
 
+def extract_subtitles(source_path, output_path):
+    output_path = output_path[:-3]
+    output_path += "srt"
+    ccextractor_command = ("ccextractor -srt " + source_path + " -o \"" +
+                           output_path + "\"")
+    logger.info("Running ccextractor: %s", ccextractor_command)
+    os.system(ccextractor_command)
+
 
 def load_config():
     if (os.path.isfile("config.ini") is False):
@@ -324,6 +336,8 @@ def load_config():
     config.transcode_tune = configfile['Encoder']['tune']
     config.transcode_profile = configfile['Encoder']['profile']
     config.transcode_level = int(configfile['Encoder']['level'])
+
+    config.subtitles_enabled = bool(configfile['Subtitles']['enabled'])
 
 
 def create_default_config():
@@ -393,6 +407,7 @@ class Config(object):
         self.transcode_tune = None
         self.transcode_profile = None
         self.transcode_level = None
+        self.subtitles_enabled = None
 
 
 config = Config()
